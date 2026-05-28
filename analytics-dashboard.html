@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #080d14;
+    --bg2: #0f1923;
+    --bg3: #162032;
+    --border: #1e3a5f33;
+    --border2: #1e3a5f66;
+    --text: #e8f4ff;
+    --muted: #4a6fa5;
+    --subtle: #243852;
+    --amber: #f59e0b;
+    --blue: #3b9eff;
+    --green: #10b981;
+    --purple: #a78bfa;
+    --pink: #f472b6;
+    --teal: #2dd4bf;
+    --red: #ef4444;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(ellipse at 50% 0%, #0f2a4a 0%, var(--bg) 70%);
+  }
+
+  .setup-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 36px;
+    box-shadow: 0 40px 80px #00000060;
+  }
+
+  .setup-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--amber), #d97706);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px #f59e0b40;
+  }
+
+  .setup-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .setup-card p { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .field input:focus { border-color: var(--amber); }
+  .field input::placeholder { color: var(--subtle); }
+  .field .hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, var(--amber), #d97706);
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    color: #000;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  .error-box {
+    background: #2d0a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #fca5a5;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    display: none;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(ellipse at 50% 0%, #0f2a4a 0%, var(--bg) 70%);
+  }
+
+  .auth-card {
+    text-align: center;
+    max-width: 380px;
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 40px 32px;
+  }
+
+  .auth-card .icon { font-size: 48px; margin-bottom: 16px; }
+  .auth-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .auth-card p { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+  .btn-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #fff;
+    color: #333;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    cursor: pointer;
+    transition: opacity .2s;
+    width: 100%;
+  }
+  .btn-google:hover { opacity: .9; }
+  .btn-google:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-back {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 16px;
+    font-family: 'Space Grotesk', sans-serif;
+    text-decoration: underline;
+  }
+
+  /* ── DASHBOARD SCREEN ── */
+  #dashboard-screen { display: none; padding: 24px; }
+
+  .dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .dash-title { font-size: 20px; font-weight: 700; }
+  .dash-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .btn-refresh:hover { border-color: var(--blue); }
+  .btn-refresh:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── STAT CARDS ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .15s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: .8;
+  }
+
+  .stat-card .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .stat-card .img-count {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-card .img-label { font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+
+  .stat-card .user-count {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--blue);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-card .user-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── CHART ── */
+  .chart-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chart-title { font-size: 13px; font-weight: 600; letter-spacing: .06em; color: var(--text); }
+
+  .legend { display: flex; gap: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  canvas { max-height: 240px; }
+
+  /* ── SPINNER ── */
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  .spinner-sm {
+    width: 14px; height: 14px;
+    border-width: 2px;
+  }
+
+  .loading-num {
+    display: inline-block;
+    width: 34px; height: 34px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .dash-error {
+    background: #2d0a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #fca5a5;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .empty-chart {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 13px;
+    flex-direction: column;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ SETUP SCREEN ══════════════════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-icon">📊</div>
+    <h1>Analytics Dashboard</h1>
+    <p>Enter your GA4 Property ID and OAuth Client ID to connect your analytics data.</p>
+
+    <div id="setup-error" class="error-box"></div>
+
+    <div class="field">
+      <label>GA4 Property ID</label>
+      <input type="text" id="inp-property" placeholder="e.g. 123456789" />
+      <div class="hint">GA4 → Admin → Property Settings → Property ID</div>
+    </div>
+
+    <div class="field">
+      <label>OAuth Client ID</label>
+      <input type="text" id="inp-clientid" placeholder="xxxx.apps.googleusercontent.com" />
+      <div class="hint">Google Cloud Console → APIs & Services → Credentials</div>
+    </div>
+
+    <button class="btn-primary" onclick="goToAuth()">Continue →</button>
+  </div>
+</div>
+
+<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="icon">🔐</div>
+    <h2>Sign in with Google</h2>
+    <p>Authorize read-only access to your GA4 analytics data to view your stats.</p>
+    <div id="auth-error" class="error-box"></div>
+    <button class="btn-google" id="btn-signin" onclick="signIn()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Sign in with Google
+    </button>
+    <br>
+    <button class="btn-back" onclick="goBack()">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════ DASHBOARD SCREEN ══════════════════ -->
+<div id="dashboard-screen">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">📸 Image Analytics</div>
+      <div class="dash-subtitle" id="last-updated">Fetching data...</div>
+    </div>
+    <button class="btn-refresh" id="btn-refresh" onclick="refresh()">
+      <span id="refresh-icon">↻</span> Refresh
+    </button>
+  </div>
+
+  <div id="dash-error" class="dash-error"></div>
+
+  <!-- Stat Cards -->
+  <div class="cards-grid" id="cards-grid"></div>
+
+  <!-- Chart -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title">📈 IMAGES GENERATED — LAST 14 DAYS</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Images</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Users</div>
+      </div>
+    </div>
+    <div id="chart-wrap">
+      <div class="empty-chart"><div class="spinner"></div><span>Loading chart...</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────────
+const GA4_API = 'https://analyticsdata.googleapis.com/v1beta/properties';
+
+const RANGES = [
+  { key: 'today',     label: 'Today',        start: 'today',     end: 'today',      accent: '#f59e0b' },
+  { key: 'yesterday', label: 'Yesterday',    start: 'yesterday', end: 'yesterday',  accent: '#a78bfa' },
+  { key: '2days',     label: 'Last 2 Days',  start: '1daysAgo',  end: 'today',      accent: '#10b981' },
+  { key: '7days',     label: 'Last 7 Days',  start: '6daysAgo',  end: 'today',      accent: '#f472b6' },
+  { key: '30days',    label: 'Last 30 Days', start: '29daysAgo', end: 'today',      accent: '#2dd4bf' },
+];
+
+let TOKEN = null;
+let PROPERTY_ID = '';
+let CLIENT_ID = '';
+let chartInstance = null;
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function show(id) { document.getElementById(id).style.display = 'flex'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function showBlock(id) { document.getElementById(id).style.display = 'block'; }
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function hideError(id) { document.getElementById(id).style.display = 'none'; }
+
+async function runReport(body) {
+  const res = await fetch(`${GA4_API}/${PROPERTY_ID}:runReport`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  return data;
+}
+
+function fmtDate(s) {
+  const d = new Date(`${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function goToAuth() {
+  PROPERTY_ID = document.getElementById('inp-property').value.trim();
+  CLIENT_ID   = document.getElementById('inp-clientid').value.trim();
+
+  if (!PROPERTY_ID || !CLIENT_ID) {
+    showError('setup-error', 'Please fill in both fields.');
+    return;
+  }
+  hideError('setup-error');
+  hide('setup-screen');
+  show('auth-screen');
+}
+
+function goBack() {
+  hide('auth-screen');
+  show('setup-screen');
+}
+
+// ── Google Sign-In ─────────────────────────────────────────────────────────────
+function signIn() {
+  if (!window.google) {
+    showError('auth-error', 'Google Identity Services not loaded yet. Please wait a moment and try again.');
+    return;
+  }
+
+  const client = window.google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/analytics.readonly',
+    callback: async (resp) => {
+      if (resp.error) {
+        showError('auth-error', 'Sign-in failed: ' + resp.error);
+        return;
+      }
+      TOKEN = resp.access_token;
+      hide('auth-screen');
+      showBlock('dashboard-screen');
+      await fetchAll();
+    },
+  });
+  client.requestAccessToken();
+}
+
+// ── Render Cards ───────────────────────────────────────────────────────────────
+function renderCards(imgStats, userStats) {
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = '';
+
+  RANGES.forEach(r => {
+    const imgs  = imgStats[r.key]  ?? '—';
+    const users = userStats[r.key] ?? '—';
+
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.style.setProperty('--accent', r.accent);
+    card.style.borderColor = r.accent + '22';
+
+    card.innerHTML = `
+      <div class="card-label">${r.label}</div>
+      <div class="img-count" id="img-${r.key}">${imgs === '—' ? '<div class="loading-num" style="--accent:'+r.accent+'"></div>' : imgs}</div>
+      <div class="img-label">Images Generated</div>
+      <div class="user-count" id="usr-${r.key}">${users}</div>
+      <div class="user-label">Active Users</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function updateCard(key, imgVal, userVal) {
+  const imgEl = document.getElementById('img-' + key);
+  const usrEl = document.getElementById('usr-' + key);
+  if (imgEl) imgEl.textContent = imgVal;
+  if (usrEl) usrEl.textContent = userVal;
+}
+
+// ── Render Chart ───────────────────────────────────────────────────────────────
+function renderChart(rows) {
+  const wrap = document.getElementById('chart-wrap');
+
+  if (!rows || rows.length === 0) {
+    wrap.innerHTML = '<div class="empty-chart"><span>📭</span><span>No data available for the last 14 days yet.</span></div>';
+    return;
+  }
+
+  wrap.innerHTML = '<canvas id="myChart"></canvas>';
+  const ctx = document.getElementById('myChart').getContext('2d');
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.date),
+      datasets: [
+        {
+          label: 'Images',
+          data: rows.map(r => r.images),
+          backgroundColor: '#f59e0b99',
+          borderColor: '#f59e0b',
+          borderWidth: 1,
+          borderRadius: 5,
+        },
+        {
+          label: 'Users',
+          data: rows.map(r => r.users),
+          backgroundColor: '#3b9eff55',
+          borderColor: '#3b9eff',
+          borderWidth: 1,
+          borderRadius: 5,
+          type: 'line',
+          tension: 0.4,
+          pointBackgroundColor: '#3b9eff',
+          pointRadius: 3,
+          yAxisID: 'y2',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f1923',
+          borderColor: '#1e3a5f66',
+          borderWidth: 1,
+          titleColor: '#4a6fa5',
+          bodyColor: '#e8f4ff',
+          padding: 10,
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: '#1e3a5f33' },
+          ticks: { color: '#4a6fa5', font: { size: 11 } },
+        },
+        y: {
+          grid: { color: '#1e3a5f33' },
+          ticks: { color: '#4a6fa5', font: { size: 11 }, precision: 0 },
+          title: { display: true, text: 'Images', color: '#f59e0b', font: { size: 11 } },
+        },
+        y2: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { color: '#3b9eff', font: { size: 11 }, precision: 0 },
+          title: { display: true, text: 'Users', color: '#3b9eff', font: { size: 11 } },
+        },
+      },
+    },
+  });
+}
+
+// ── Fetch All Data ─────────────────────────────────────────────────────────────
+async function fetchAll() {
+  const refreshBtn = document.getElementById('btn-refresh');
+  const refreshIcon = document.getElementById('refresh-icon');
+  refreshBtn.disabled = true;
+  refreshIcon.innerHTML = '<div class="spinner spinner-sm" style="border-top-color:#fff"></div>';
+  hideError('dash-error');
+
+  // Render skeleton cards immediately
+  renderCards({}, {});
+
+  try {
+    // Parallel: image counts + user counts for all ranges + chart data
+    const imgPromises = RANGES.map(r =>
+      runReport({
+        dateRanges: [{ startDate: r.start, endDate: r.end }],
+        metrics: [{ name: 'eventCount' }],
+        dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: 'image_generated' } } },
+      })
+      .then(d => ({ key: r.key, val: parseInt(d.rows?.[0]?.metricValues?.[0]?.value || 0) }))
+      .catch(() => ({ key: r.key, val: 0 }))
+    );
+
+    const usrPromises = RANGES.map(r =>
+      runReport({
+        dateRanges: [{ startDate: r.start, endDate: r.end }],
+        metrics: [{ name: 'activeUsers' }],
+      })
+      .then(d => ({ key: r.key, val: parseInt(d.rows?.[0]?.metricValues?.[0]?.value || 0) }))
+      .catch(() => ({ key: r.key, val: 0 }))
+    );
+
+    const chartPromise = runReport({
+      dateRanges: [{ startDate: '13daysAgo', endDate: 'today' }],
+      dimensions: [{ name: 'date' }],
+      metrics: [{ name: 'eventCount' }, { name: 'activeUsers' }],
+      dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { value: 'image_generated' } } },
+      orderBys: [{ dimension: { dimensionName: 'date' } }],
+    })
+    .then(d => (d.rows || []).map(row => ({
+      date:   fmtDate(row.dimensionValues[0].value),
+      images: parseInt(row.metricValues[0].value || 0),
+      users:  parseInt(row.metricValues[1]?.value || 0),
+    })))
+    .catch(() => []);
+
+    const [imgResults, usrResults, chartRows] = await Promise.all([
+      Promise.all(imgPromises),
+      Promise.all(usrPromises),
+      chartPromise,
+    ]);
+
+    // Update cards
+    const imgMap = Object.fromEntries(imgResults.map(r => [r.key, r.val]));
+    const usrMap = Object.fromEntries(usrResults.map(r => [r.key, r.val]));
+    RANGES.forEach(r => updateCard(r.key, imgMap[r.key], usrMap[r.key]));
+
+    // Render chart
+    renderChart(chartRows);
+
+    document.getElementById('last-updated').textContent =
+      'Last updated: ' + new Date().toLocaleTimeString();
+
+  } catch (err) {
+    showError('dash-error', err.message || 'Failed to fetch data. Check your Property ID and try again.');
+  } finally {
+    refreshBtn.disabled = false;
+    refreshIcon.textContent = '↻';
+  }
+}
+
+function refresh() { if (TOKEN) fetchAll(); }
+</script>
+
+</body>
+</html>
